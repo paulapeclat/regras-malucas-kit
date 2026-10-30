@@ -11,7 +11,7 @@
 
 <p align="center">
   <b>9 regras de obby prontas.</b> Marque uma Part com uma Tag, ajuste os Attributes e dê Play.<br>
-  <sub>🇬🇧 Tag-driven obby mechanics for Roblox. Tag a Part, tweak its Attributes, done.</sub>
+  <sub>EN · Tag-driven obby mechanics for Roblox. Tag a Part, tweak its Attributes, done.</sub>
 </p>
 
 <p align="center">
