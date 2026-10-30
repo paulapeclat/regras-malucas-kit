@@ -15,7 +15,11 @@ jobs:
         uses: CompeyDev/setup-rokit@v0.1.2
 
       - name: Formatação (StyLua)
-        run: stylua --check src tests examples
+        run: |
+          if ! stylua --check src tests examples > stylua.diff 2>&1; then
+            echo "::error title=StyLua::$(head -c 3500 stylua.diff | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')"
+            exit 1
+          fi
 
       - name: Lint (Selene)
         run: selene src examples
