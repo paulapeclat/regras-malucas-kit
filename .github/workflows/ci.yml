@@ -36,3 +36,8 @@ jobs:
 
       - name: Testes do Cooldown
         run: ./luau tests/Cooldown.spec.luau
+
+      - name: Kit fácil atualizado com src/
+        run: |
+          python3 tools/gerar_kit_facil.py
+          git diff --exit-code facil/ || { echo "::error::Rode python3 tools/gerar_kit_facil.py e faça commit"; exit 1; }

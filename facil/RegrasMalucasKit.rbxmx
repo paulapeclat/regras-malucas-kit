@@ -1,0 +1,372 @@
+<roblox xmlns:xmime="http://www.w3.org/2005/05/xmlmime" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.roblox.com/roblox.xsd" version="4"><Item class="Folder" referent="RBX39"><Properties><string name="Name">RegrasMalucasKit</string></Properties><Item class="Script" referent="RBX5"><Properties><string name="Name">LigarRegras</string><ProtectedString name="Source"><![CDATA[-- Liga as Regras Malucas. Não precisa mexer aqui.
+-- Qualquer bloco com a etiqueta (Tag) "Regra:..." passa a seguir a regra.
+local Kit = require(script.Parent:WaitForChild("Kit"))
+Kit.iniciar()
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX4"><Properties><string name="Name">Kit</string><ProtectedString name="Source"><![CDATA[--!strict
+--[[
+	regras-malucas-kit
+	Mecânicas de obby ligadas por Tags (CollectionService) e configuradas por Attributes.
+
+	Uso (num Script do ServerScriptService):
+		local Kit = require(caminho.para.RegrasMalucasKit)
+		Kit.iniciar()
+
+	No Studio, marque uma Part com a Tag "Regra:Trampolim" (ou outra do catálogo)
+	e ajuste os Attributes dela. Pronto.
+]]
+
+local CollectionService = game:GetService("CollectionService")
+local RunService = game:GetService("RunService")
+
+local Regras = require(script.Regras)
+
+local PREFIXO = "Regra:"
+
+local Kit = {}
+Kit.Regras = Regras
+
+local ligadas: { [Instance]: { [string]: true } } = setmetatable({}, { __mode = "k" }) :: any
+local iniciado = false
+
+local function ligar(nome: string, inst: Instance)
+	if not inst:IsA("BasePart") then
+		warn(`[regras-malucas-kit] {inst:GetFullName()} tem a tag {PREFIXO}{nome}, mas não é BasePart`)
+		return
+	end
+	local jaLigadas = ligadas[inst]
+	if not jaLigadas then
+		jaLigadas = {}
+		ligadas[inst] = jaLigadas
+	end
+	if jaLigadas[nome] then
+		return
+	end
+	jaLigadas[nome] = true
+	Regras[nome](inst)
+end
+
+-- Liga todas as regras do catálogo. Só roda no servidor e só uma vez.
+function Kit.iniciar()
+	assert(RunService:IsServer(), "regras-malucas-kit precisa rodar no servidor")
+	if iniciado then
+		return
+	end
+	iniciado = true
+
+	for nome in Regras do
+		local tag = PREFIXO .. nome
+		for _, inst in CollectionService:GetTagged(tag) do
+			ligar(nome, inst)
+		end
+		CollectionService:GetInstanceAddedSignal(tag):Connect(function(inst)
+			ligar(nome, inst)
+		end)
+	end
+end
+
+-- Lista os nomes de tag disponíveis (útil para documentação e para o plugin de tags).
+function Kit.tags(): { string }
+	local lista = {}
+	for nome in Regras do
+		table.insert(lista, PREFIXO .. nome)
+	end
+	table.sort(lista)
+	return lista
+end
+
+return Kit
+]]></ProtectedString></Properties><Item class="ModuleScript" referent="RBX1"><Properties><string name="Name">Regras</string><ProtectedString name="Source"><![CDATA[--!strict
+--[[
+	Catálogo de regras malucas. Cada regra recebe uma BasePart e liga o comportamento
+	nela. A configuração vem de Attributes da própria peça, então quem monta a fase
+	não precisa abrir nenhum script.
+]]
+
+local Util = require(script.Parent.Util)
+local Cooldown = require(script.Parent.Cooldown)
+
+export type Regra = (parte: BasePart) -> ()
+
+local Regras: { [string]: Regra } = {}
+
+-- Trampolim: lança o jogador para cima.
+-- Attributes: Forca (padrão 120)
+Regras.Trampolim = function(parte)
+	local cd = Cooldown.new(0.4)
+	parte.Touched:Connect(function(hit)
+		local alvo = Util.alvoDoToque(hit)
+		if not alvo or not cd:pronto(alvo.player) then
+			return
+		end
+		local v = alvo.root.AssemblyLinearVelocity
+		alvo.root.AssemblyLinearVelocity = Vector3.new(v.X, Util.numero(parte, "Forca", 120), v.Z)
+	end)
+end
+
+-- Velocidade: corre mais rápido por alguns segundos.
+-- Attributes: Velocidade (40), Duracao (5)
+Regras.Velocidade = function(parte)
+	local cd = Cooldown.new(0.5)
+	parte.Touched:Connect(function(hit)
+		local alvo = Util.alvoDoToque(hit)
+		if not alvo or not cd:pronto(alvo.player) then
+			return
+		end
+		Util.propriedadeTemporaria(
+			alvo.humanoid,
+			"WalkSpeed",
+			Util.numero(parte, "Velocidade", 40),
+			Util.numero(parte, "Duracao", 5)
+		)
+	end)
+end
+
+-- GravidadeLeve: só o jogador que tocou fica leve (não muda a gravidade do servidor todo).
+-- Attributes: Fator (0.3 = sente 30% da gravidade), Duracao (5)
+Regras.GravidadeLeve = function(parte)
+	local cd = Cooldown.new(0.5)
+	parte.Touched:Connect(function(hit)
+		local alvo = Util.alvoDoToque(hit)
+		if not alvo or not cd:pronto(alvo.player) then
+			return
+		end
+		local antiga = alvo.root:FindFirstChild("RegraGravidadeLeve")
+		if antiga then
+			antiga:Destroy()
+		end
+
+		local fator = math.clamp(Util.numero(parte, "Fator", 0.3), 0, 1)
+		local anexo = Instance.new("Attachment")
+		anexo.Name = "RegraGravidadeLeve"
+		local forca = Instance.new("VectorForce")
+		forca.RelativeTo = Enum.ActuatorRelativeTo.World
+		forca.ApplyAtCenterOfMass = true
+		forca.Attachment0 = anexo
+		forca.Force = Vector3.new(0, alvo.root.AssemblyMass * workspace.Gravity * (1 - fator), 0)
+		forca.Parent = anexo
+		anexo.Parent = alvo.root
+
+		task.delay(Util.numero(parte, "Duracao", 5), function()
+			if anexo.Parent then
+				anexo:Destroy()
+			end
+		end)
+	end)
+end
+
+-- Cura: enche a vida.
+Regras.Cura = function(parte)
+	local cd = Cooldown.new(1)
+	parte.Touched:Connect(function(hit)
+		local alvo = Util.alvoDoToque(hit)
+		if alvo and cd:pronto(alvo.player) then
+			alvo.humanoid.Health = alvo.humanoid.MaxHealth
+		end
+	end)
+end
+
+-- Dano: tira um pouco de vida, no máximo uma vez por segundo por jogador.
+-- Attributes: Dano (10)
+Regras.Dano = function(parte)
+	local cd = Cooldown.new(1)
+	parte.Touched:Connect(function(hit)
+		local alvo = Util.alvoDoToque(hit)
+		if alvo and cd:pronto(alvo.player) then
+			alvo.humanoid:TakeDamage(Util.numero(parte, "Dano", 10))
+		end
+	end)
+end
+
+-- Morte: o kill brick clássico.
+Regras.Morte = function(parte)
+	parte.Touched:Connect(function(hit)
+		local alvo = Util.alvoDoToque(hit)
+		if alvo then
+			alvo.humanoid.Health = 0
+		end
+	end)
+end
+
+-- SomeAoTocar: a plataforma vai sumindo e volta depois.
+-- Attributes: TempoSumir (1.5), TempoVoltar (3)
+Regras.SomeAoTocar = function(parte)
+	local transparenciaOriginal = parte.Transparency
+	local ocupada = false
+	parte.Touched:Connect(function(hit)
+		if ocupada or not Util.alvoDoToque(hit) then
+			return
+		end
+		ocupada = true
+		local passos = 10
+		local tempo = Util.numero(parte, "TempoSumir", 1.5)
+		for i = 1, passos do
+			parte.Transparency = transparenciaOriginal + (1 - transparenciaOriginal) * (i / passos)
+			task.wait(tempo / passos)
+		end
+		parte.CanCollide = false
+		task.wait(Util.numero(parte, "TempoVoltar", 3))
+		parte.Transparency = transparenciaOriginal
+		parte.CanCollide = true
+		ocupada = false
+	end)
+end
+
+-- PiscaPisca: aparece e some sozinha, em ciclo.
+-- Attributes: TempoVisivel (2), TempoInvisivel (2)
+Regras.PiscaPisca = function(parte)
+	local transparenciaOriginal = parte.Transparency
+	task.spawn(function()
+		while parte.Parent do
+			parte.Transparency = transparenciaOriginal
+			parte.CanCollide = true
+			task.wait(Util.numero(parte, "TempoVisivel", 2))
+			parte.Transparency = 1
+			parte.CanCollide = false
+			task.wait(Util.numero(parte, "TempoInvisivel", 2))
+		end
+	end)
+end
+
+-- Teleporte: leva o jogador até a peça apontada por um ObjectValue filho chamado "Destino".
+Regras.Teleporte = function(parte)
+	local cd = Cooldown.new(1.5)
+	parte.Touched:Connect(function(hit)
+		local alvo = Util.alvoDoToque(hit)
+		local destino = parte:FindFirstChild("Destino")
+		if not alvo or not destino or not destino:IsA("ObjectValue") then
+			return
+		end
+		local peca = destino.Value
+		if peca and peca:IsA("BasePart") and cd:pronto(alvo.player) then
+			alvo.character:PivotTo(peca.CFrame + Vector3.new(0, 4, 0))
+		end
+	end)
+end
+
+return Regras
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX2"><Properties><string name="Name">Util</string><ProtectedString name="Source"><![CDATA[--!strict
+-- Funções compartilhadas pelas regras.
+
+local Players = game:GetService("Players")
+
+local Util = {}
+
+export type Alvo = {
+	player: Player,
+	character: Model,
+	humanoid: Humanoid,
+	root: BasePart,
+}
+
+-- Converte a peça que tocou em um jogador vivo, ou nil.
+function Util.alvoDoToque(hit: BasePart): Alvo?
+	local character = hit.Parent
+	if not character or not character:IsA("Model") then
+		return nil
+	end
+	local player = Players:GetPlayerFromCharacter(character)
+	if not player then
+		return nil
+	end
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	local root = character:FindFirstChild("HumanoidRootPart")
+	if not humanoid or humanoid.Health <= 0 or not root or not root:IsA("BasePart") then
+		return nil
+	end
+	return { player = player, character = character, humanoid = humanoid, root = root }
+end
+
+-- Lê um atributo numérico com valor padrão.
+function Util.numero(inst: Instance, nome: string, padrao: number): number
+	local v = inst:GetAttribute(nome)
+	return if type(v) == "number" then v else padrao
+end
+
+type Efeito = { original: any, token: number }
+local ativos: { [Instance]: { [string]: Efeito } } = setmetatable({}, { __mode = "k" }) :: any
+
+--[[
+	Muda uma propriedade por um tempo e depois devolve o valor ORIGINAL.
+
+	O original é guardado só no primeiro efeito. Se o jogador pisar de novo
+	antes de acabar, o tempo renova, mas o valor guardado continua o certo.
+	(Sem isso, o segundo toque "guardaria" o valor já aumentado e o bônus
+	ficaria para sempre: um bug clássico de obby.)
+]]
+function Util.propriedadeTemporaria(inst: Instance, prop: string, valor: any, duracao: number)
+	local porInst = ativos[inst]
+	if not porInst then
+		porInst = {}
+		ativos[inst] = porInst
+	end
+	local efeito = porInst[prop]
+	if not efeito then
+		efeito = { original = (inst :: any)[prop], token = 0 }
+		porInst[prop] = efeito
+	end
+	efeito.token += 1
+	local meuToken = efeito.token
+	local alvo: any = inst
+	alvo[prop] = valor
+
+	task.delay(duracao, function()
+		if porInst[prop] == efeito and efeito.token == meuToken then
+			if inst.Parent then
+				alvo[prop] = efeito.original
+			end
+			porInst[prop] = nil
+		end
+	end)
+end
+
+return Util
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX3"><Properties><string name="Name">Cooldown</string><ProtectedString name="Source"><![CDATA[--!strict
+--[[
+	Cooldown por chave (normalmente um Player).
+	Evita que o mesmo toque dispare a regra várias vezes por segundo,
+	sem bloquear os outros jogadores.
+
+	Puro: recebe o relógio por parâmetro, então pode ser testado fora do Roblox.
+]]
+
+export type Cooldown<K> = {
+	pronto: (self: Cooldown<K>, chave: K) -> boolean,
+	limpar: (self: Cooldown<K>, chave: K) -> (),
+}
+
+type Interno<K> = Cooldown<K> & {
+	_duracao: number,
+	_relogio: () -> number,
+	_ultimo: { [K]: number },
+}
+
+local Cooldown = {}
+Cooldown.__index = Cooldown
+
+function Cooldown.new<K>(duracao: number, relogio: (() -> number)?): Cooldown<K>
+	assert(duracao >= 0, "duracao precisa ser >= 0")
+	local self = setmetatable({
+		_duracao = duracao,
+		_relogio = relogio or os.clock,
+		_ultimo = {},
+	}, Cooldown)
+	return (self :: any) :: Cooldown<K>
+end
+
+-- Retorna true e marca o uso se a chave estiver liberada.
+function Cooldown.pronto<K>(self: Interno<K>, chave: K): boolean
+	local agora = self._relogio()
+	local ultimo = self._ultimo[chave]
+	if ultimo ~= nil and agora - ultimo < self._duracao then
+		return false
+	end
+	self._ultimo[chave] = agora
+	return true
+end
+
+function Cooldown.limpar<K>(self: Interno<K>, chave: K)
+	self._ultimo[chave] = nil
+end
+
+return Cooldown
+]]></ProtectedString></Properties></Item></Item><Item class="Folder" referent="RBX38"><Properties><string name="Name">Fase de exemplo</string></Properties><Item class="Part" referent="RBX9"><Properties><string name="Name">Trampolim</string><bool name="Anchored">true</bool><CoordinateFrame name="CFrame"><X>-16</X><Y>0.5</Y><Z>-24</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>10</X><Y>1</Y><Z>10</Z></Vector3><Color3uint8 name="Color3uint8">4294953021</Color3uint8><token name="Material">272</token><token name="TopSurface">0</token><token name="BottomSurface">0</token><BinaryString name="Tags">UmVncmE6VHJhbXBvbGlt</BinaryString></Properties><Item class="BillboardGui" referent="RBX8"><Properties><string name="Name">Nome da regra</string><UDim2 name="Size"><XS>0</XS><XO>220</XO><YS>0</YS><YO>50</YO></UDim2><Vector3 name="StudsOffset"><X>0</X><Y>4</Y><Z>0</Z></Vector3><float name="MaxDistance">120</float></Properties><Item class="TextLabel" referent="RBX7"><Properties><string name="Name">Texto</string><string name="Text">TRAMPOLIM</string><UDim2 name="Size"><XS>1</XS><XO>0</XO><YS>1</YS><YO>0</YO></UDim2><float name="BackgroundTransparency">1</float><bool name="TextScaled">true</bool><Color3 name="TextColor3"><R>1.000</R><G>1.000</G><B>1.000</B></Color3><float name="TextStrokeTransparency">0</float><Font name="FontFace"><Family><url>rbxasset://fonts/families/FredokaOne.json</url></Family><Weight>400</Weight><Style>Normal</Style></Font></Properties></Item></Item></Item><Item class="Part" referent="RBX12"><Properties><string name="Name">Velocidade</string><bool name="Anchored">true</bool><CoordinateFrame name="CFrame"><X>0</X><Y>0.5</Y><Z>-24</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>10</X><Y>1</Y><Z>10</Z></Vector3><Color3uint8 name="Color3uint8">4281908728</Color3uint8><token name="Material">272</token><token name="TopSurface">0</token><token name="BottomSurface">0</token><BinaryString name="Tags">UmVncmE6VmVsb2NpZGFkZQ==</BinaryString></Properties><Item class="BillboardGui" referent="RBX11"><Properties><string name="Name">Nome da regra</string><UDim2 name="Size"><XS>0</XS><XO>220</XO><YS>0</YS><YO>50</YO></UDim2><Vector3 name="StudsOffset"><X>0</X><Y>4</Y><Z>0</Z></Vector3><float name="MaxDistance">120</float></Properties><Item class="TextLabel" referent="RBX10"><Properties><string name="Name">Texto</string><string name="Text">VELOCIDADE</string><UDim2 name="Size"><XS>1</XS><XO>0</XO><YS>1</YS><YO>0</YO></UDim2><float name="BackgroundTransparency">1</float><bool name="TextScaled">true</bool><Color3 name="TextColor3"><R>1.000</R><G>1.000</G><B>1.000</B></Color3><float name="TextStrokeTransparency">0</float><Font name="FontFace"><Family><url>rbxasset://fonts/families/FredokaOne.json</url></Family><Weight>400</Weight><Style>Normal</Style></Font></Properties></Item></Item></Item><Item class="Part" referent="RBX15"><Properties><string name="Name">Gravidade Leve</string><bool name="Anchored">true</bool><CoordinateFrame name="CFrame"><X>16</X><Y>0.5</Y><Z>-24</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>10</X><Y>1</Y><Z>10</Z></Vector3><Color3uint8 name="Color3uint8">4287323382</Color3uint8><token name="Material">272</token><token name="TopSurface">0</token><token name="BottomSurface">0</token><BinaryString name="Tags">UmVncmE6R3JhdmlkYWRlTGV2ZQ==</BinaryString></Properties><Item class="BillboardGui" referent="RBX14"><Properties><string name="Name">Nome da regra</string><UDim2 name="Size"><XS>0</XS><XO>220</XO><YS>0</YS><YO>50</YO></UDim2><Vector3 name="StudsOffset"><X>0</X><Y>4</Y><Z>0</Z></Vector3><float name="MaxDistance">120</float></Properties><Item class="TextLabel" referent="RBX13"><Properties><string name="Name">Texto</string><string name="Text">GRAVIDADE LEVE</string><UDim2 name="Size"><XS>1</XS><XO>0</XO><YS>1</YS><YO>0</YO></UDim2><float name="BackgroundTransparency">1</float><bool name="TextScaled">true</bool><Color3 name="TextColor3"><R>1.000</R><G>1.000</G><B>1.000</B></Color3><float name="TextStrokeTransparency">0</float><Font name="FontFace"><Family><url>rbxasset://fonts/families/FredokaOne.json</url></Family><Weight>400</Weight><Style>Normal</Style></Font></Properties></Item></Item></Item><Item class="Part" referent="RBX18"><Properties><string name="Name">Cura</string><bool name="Anchored">true</bool><CoordinateFrame name="CFrame"><X>-16</X><Y>0.5</Y><Z>-40</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>10</X><Y>1</Y><Z>10</Z></Vector3><Color3uint8 name="Color3uint8">4282244228</Color3uint8><token name="Material">272</token><token name="TopSurface">0</token><token name="BottomSurface">0</token><BinaryString name="Tags">UmVncmE6Q3VyYQ==</BinaryString></Properties><Item class="BillboardGui" referent="RBX17"><Properties><string name="Name">Nome da regra</string><UDim2 name="Size"><XS>0</XS><XO>220</XO><YS>0</YS><YO>50</YO></UDim2><Vector3 name="StudsOffset"><X>0</X><Y>4</Y><Z>0</Z></Vector3><float name="MaxDistance">120</float></Properties><Item class="TextLabel" referent="RBX16"><Properties><string name="Name">Texto</string><string name="Text">CURA</string><UDim2 name="Size"><XS>1</XS><XO>0</XO><YS>1</YS><YO>0</YO></UDim2><float name="BackgroundTransparency">1</float><bool name="TextScaled">true</bool><Color3 name="TextColor3"><R>1.000</R><G>1.000</G><B>1.000</B></Color3><float name="TextStrokeTransparency">0</float><Font name="FontFace"><Family><url>rbxasset://fonts/families/FredokaOne.json</url></Family><Weight>400</Weight><Style>Normal</Style></Font></Properties></Item></Item></Item><Item class="Part" referent="RBX21"><Properties><string name="Name">Dano</string><bool name="Anchored">true</bool><CoordinateFrame name="CFrame"><X>0</X><Y>0.5</Y><Z>-40</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>10</X><Y>1</Y><Z>10</Z></Vector3><Color3uint8 name="Color3uint8">4294677052</Color3uint8><token name="Material">272</token><token name="TopSurface">0</token><token name="BottomSurface">0</token><BinaryString name="Tags">UmVncmE6RGFubw==</BinaryString></Properties><Item class="BillboardGui" referent="RBX20"><Properties><string name="Name">Nome da regra</string><UDim2 name="Size"><XS>0</XS><XO>220</XO><YS>0</YS><YO>50</YO></UDim2><Vector3 name="StudsOffset"><X>0</X><Y>4</Y><Z>0</Z></Vector3><float name="MaxDistance">120</float></Properties><Item class="TextLabel" referent="RBX19"><Properties><string name="Name">Texto</string><string name="Text">DANO</string><UDim2 name="Size"><XS>1</XS><XO>0</XO><YS>1</YS><YO>0</YO></UDim2><float name="BackgroundTransparency">1</float><bool name="TextScaled">true</bool><Color3 name="TextColor3"><R>1.000</R><G>1.000</G><B>1.000</B></Color3><float name="TextStrokeTransparency">0</float><Font name="FontFace"><Family><url>rbxasset://fonts/families/FredokaOne.json</url></Family><Weight>400</Weight><Style>Normal</Style></Font></Properties></Item></Item></Item><Item class="Part" referent="RBX24"><Properties><string name="Name">Morte</string><bool name="Anchored">true</bool><CoordinateFrame name="CFrame"><X>16</X><Y>0.5</Y><Z>-40</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>10</X><Y>1</Y><Z>10</Z></Vector3><Color3uint8 name="Color3uint8">4294925661</Color3uint8><token name="Material">272</token><token name="TopSurface">0</token><token name="BottomSurface">0</token><BinaryString name="Tags">UmVncmE6TW9ydGU=</BinaryString></Properties><Item class="BillboardGui" referent="RBX23"><Properties><string name="Name">Nome da regra</string><UDim2 name="Size"><XS>0</XS><XO>220</XO><YS>0</YS><YO>50</YO></UDim2><Vector3 name="StudsOffset"><X>0</X><Y>4</Y><Z>0</Z></Vector3><float name="MaxDistance">120</float></Properties><Item class="TextLabel" referent="RBX22"><Properties><string name="Name">Texto</string><string name="Text">MORTE</string><UDim2 name="Size"><XS>1</XS><XO>0</XO><YS>1</YS><YO>0</YO></UDim2><float name="BackgroundTransparency">1</float><bool name="TextScaled">true</bool><Color3 name="TextColor3"><R>1.000</R><G>1.000</G><B>1.000</B></Color3><float name="TextStrokeTransparency">0</float><Font name="FontFace"><Family><url>rbxasset://fonts/families/FredokaOne.json</url></Family><Weight>400</Weight><Style>Normal</Style></Font></Properties></Item></Item></Item><Item class="Part" referent="RBX27"><Properties><string name="Name">Some Ao Tocar</string><bool name="Anchored">true</bool><CoordinateFrame name="CFrame"><X>-16</X><Y>0.5</Y><Z>-56</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>10</X><Y>1</Y><Z>10</Z></Vector3><Color3uint8 name="Color3uint8">4294210230</Color3uint8><token name="Material">272</token><token name="TopSurface">0</token><token name="BottomSurface">0</token><BinaryString name="Tags">UmVncmE6U29tZUFvVG9jYXI=</BinaryString></Properties><Item class="BillboardGui" referent="RBX26"><Properties><string name="Name">Nome da regra</string><UDim2 name="Size"><XS>0</XS><XO>220</XO><YS>0</YS><YO>50</YO></UDim2><Vector3 name="StudsOffset"><X>0</X><Y>4</Y><Z>0</Z></Vector3><float name="MaxDistance">120</float></Properties><Item class="TextLabel" referent="RBX25"><Properties><string name="Name">Texto</string><string name="Text">SOME AO TOCAR</string><UDim2 name="Size"><XS>1</XS><XO>0</XO><YS>1</YS><YO>0</YO></UDim2><float name="BackgroundTransparency">1</float><bool name="TextScaled">true</bool><Color3 name="TextColor3"><R>1.000</R><G>1.000</G><B>1.000</B></Color3><float name="TextStrokeTransparency">0</float><Font name="FontFace"><Family><url>rbxasset://fonts/families/FredokaOne.json</url></Family><Weight>400</Weight><Style>Normal</Style></Font></Properties></Item></Item></Item><Item class="Part" referent="RBX30"><Properties><string name="Name">Pisca-Pisca</string><bool name="Anchored">true</bool><CoordinateFrame name="CFrame"><X>0</X><Y>0.5</Y><Z>-56</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>10</X><Y>1</Y><Z>10</Z></Vector3><Color3uint8 name="Color3uint8">4294626325</Color3uint8><token name="Material">272</token><token name="TopSurface">0</token><token name="BottomSurface">0</token><BinaryString name="Tags">UmVncmE6UGlzY2FQaXNjYQ==</BinaryString></Properties><Item class="BillboardGui" referent="RBX29"><Properties><string name="Name">Nome da regra</string><UDim2 name="Size"><XS>0</XS><XO>220</XO><YS>0</YS><YO>50</YO></UDim2><Vector3 name="StudsOffset"><X>0</X><Y>4</Y><Z>0</Z></Vector3><float name="MaxDistance">120</float></Properties><Item class="TextLabel" referent="RBX28"><Properties><string name="Name">Texto</string><string name="Text">PISCA-PISCA</string><UDim2 name="Size"><XS>1</XS><XO>0</XO><YS>1</YS><YO>0</YO></UDim2><float name="BackgroundTransparency">1</float><bool name="TextScaled">true</bool><Color3 name="TextColor3"><R>1.000</R><G>1.000</G><B>1.000</B></Color3><float name="TextStrokeTransparency">0</float><Font name="FontFace"><Family><url>rbxasset://fonts/families/FredokaOne.json</url></Family><Weight>400</Weight><Style>Normal</Style></Font></Properties></Item></Item></Item><Item class="Part" referent="RBX34"><Properties><string name="Name">Teleporte</string><bool name="Anchored">true</bool><CoordinateFrame name="CFrame"><X>16</X><Y>0.5</Y><Z>-56</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>10</X><Y>1</Y><Z>10</Z></Vector3><Color3uint8 name="Color3uint8">4280472558</Color3uint8><token name="Material">272</token><token name="TopSurface">0</token><token name="BottomSurface">0</token><BinaryString name="Tags">UmVncmE6VGVsZXBvcnRl</BinaryString></Properties><Item class="ObjectValue" referent="RBX31"><Properties><string name="Name">Destino</string><Ref name="Value">RBX6</Ref></Properties></Item><Item class="BillboardGui" referent="RBX33"><Properties><string name="Name">Nome da regra</string><UDim2 name="Size"><XS>0</XS><XO>220</XO><YS>0</YS><YO>50</YO></UDim2><Vector3 name="StudsOffset"><X>0</X><Y>4</Y><Z>0</Z></Vector3><float name="MaxDistance">120</float></Properties><Item class="TextLabel" referent="RBX32"><Properties><string name="Name">Texto</string><string name="Text">TELEPORTE</string><UDim2 name="Size"><XS>1</XS><XO>0</XO><YS>1</YS><YO>0</YO></UDim2><float name="BackgroundTransparency">1</float><bool name="TextScaled">true</bool><Color3 name="TextColor3"><R>1.000</R><G>1.000</G><B>1.000</B></Color3><float name="TextStrokeTransparency">0</float><Font name="FontFace"><Family><url>rbxasset://fonts/families/FredokaOne.json</url></Family><Weight>400</Weight><Style>Normal</Style></Font></Properties></Item></Item></Item><Item class="Part" referent="RBX6"><Properties><string name="Name">Chegada do teleporte</string><bool name="Anchored">true</bool><CoordinateFrame name="CFrame"><X>40</X><Y>24</Y><Z>-40</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>12</X><Y>1</Y><Z>12</Z></Vector3><Color3uint8 name="Color3uint8">4280472558</Color3uint8><token name="Material">272</token><token name="TopSurface">0</token><token name="BottomSurface">0</token></Properties><Item class="BillboardGui" referent="RBX36"><Properties><string name="Name">Nome da regra</string><UDim2 name="Size"><XS>0</XS><XO>220</XO><YS>0</YS><YO>50</YO></UDim2><Vector3 name="StudsOffset"><X>0</X><Y>4</Y><Z>0</Z></Vector3><float name="MaxDistance">120</float></Properties><Item class="TextLabel" referent="RBX35"><Properties><string name="Name">Texto</string><string name="Text">CHEGADA</string><UDim2 name="Size"><XS>1</XS><XO>0</XO><YS>1</YS><YO>0</YO></UDim2><float name="BackgroundTransparency">1</float><bool name="TextScaled">true</bool><Color3 name="TextColor3"><R>1.000</R><G>1.000</G><B>1.000</B></Color3><float name="TextStrokeTransparency">0</float><Font name="FontFace"><Family><url>rbxasset://fonts/families/FredokaOne.json</url></Family><Weight>400</Weight><Style>Normal</Style></Font></Properties></Item></Item></Item><Item class="Part" referent="RBX37"><Properties><string name="Name">Torre</string><bool name="Anchored">true</bool><CoordinateFrame name="CFrame"><X>40</X><Y>11.75</Y><Z>-40</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>4</X><Y>23.5</Y><Z>4</Z></Vector3><Color3uint8 name="Color3uint8">4280951350</Color3uint8><token name="Material">272</token><token name="TopSurface">0</token><token name="BottomSurface">0</token></Properties></Item></Item></Item></roblox>
