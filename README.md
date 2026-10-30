@@ -1,36 +1,50 @@
-# regras-malucas-kit
+<p align="center">
+  <img src="assets/banner.png" alt="Regras Malucas Kit: mecânicas de obby para Roblox Studio ligadas por Tags e configuradas por Attributes" width="100%">
+</p>
 
-![Luau](https://img.shields.io/badge/Luau-strict-00A2FF)
-![Roblox](https://img.shields.io/badge/Roblox-Studio-000000)
-![License: MIT](https://img.shields.io/badge/license-MIT-green)
-[![CI](https://github.com/paulapeclat/regras-malucas-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/paulapeclat/regras-malucas-kit/actions)
+<p align="center">
+  <img src="https://img.shields.io/badge/Luau-strict-8b5cf6?style=for-the-badge" alt="Luau strict">
+  <img src="https://img.shields.io/badge/Roblox-Studio-38bdf8?style=for-the-badge" alt="Roblox Studio">
+  <img src="https://img.shields.io/badge/licen%C3%A7a-MIT-3ddc84?style=for-the-badge" alt="Licença MIT">
+  <a href="https://github.com/paulapeclat/regras-malucas-kit/actions"><img src="https://img.shields.io/github/actions/workflow/status/paulapeclat/regras-malucas-kit/ci.yml?branch=main&style=for-the-badge&label=CI" alt="CI"></a>
+</p>
 
-**PT** · Mecânicas de obby para Roblox que você liga **sem abrir script**: marque uma Part com uma
-Tag, ajuste os Attributes e a regra funciona. Nasceu das regras do meu jogo
-[**Regras Malucas!**](https://github.com/paulapeclat/regras-malucas-showcase).
+<p align="center">
+  <b>9 regras de obby prontas.</b> Marque uma Part com uma Tag, ajuste os Attributes e dê Play.<br>
+  <sub>🇬🇧 Tag-driven obby mechanics for Roblox. Tag a Part, tweak its Attributes, done.</sub>
+</p>
 
-**EN** · Tag-driven obby mechanics for Roblox. Tag a Part, tweak its Attributes, done.
-Extracted from my game *Regras Malucas!* (Crazy Rules!).
-
-> 📘 **Livro:** *Crie o primeiro obby com seu filho(a)*, um passo a passo para pais e crianças
-> construírem juntos o primeiro jogo, com as regras deste kit explicadas do zero.
-> **[Entre na lista de espera →](https://paulapeclat.github.io/primeiro-obby/)**
+<p align="center">
+  <a href="#-como-funciona">Como funciona</a> ·
+  <a href="#-as-regras">As regras</a> ·
+  <a href="#-instalação">Instalação</a> ·
+  <a href="#-crie-a-sua-regra">Crie a sua</a> ·
+  <a href="#-o-livro">O livro</a>
+</p>
 
 ---
 
-## Por que existe
+## 🧩 Como funciona
 
-As primeiras versões das regras eram um script por peça, copiado e colado. Isso gerava três bugs
-recorrentes, que este kit resolve por design:
+<img src="assets/passos.png" alt="1. Marque a Tag Regra:Trampolim na Part. 2. Ajuste o Attribute Forca. 3. Dê Play: a regra liga sozinha." width="100%">
 
-| Problema no script copiado | Como o kit resolve |
-|---|---|
-| Um toque dispara a regra dezenas de vezes (o `Touched` repete enquanto o pé encosta) | `Cooldown` **por jogador**, que não bloqueia os outros |
-| Pisar duas vezes no bônus guardava o valor já aumentado e o bônus ficava para sempre | `Util.propriedadeTemporaria` guarda o valor **original** só no primeiro efeito |
-| `workspace.Gravity = 10` deixava **o servidor inteiro** leve | `GravidadeLeve` usa uma `VectorForce` só no jogador que tocou |
-| 40 cópias do mesmo script para manter | Um módulo; as peças só têm Tags e Attributes |
+Um único Script liga tudo:
 
-## Regras disponíveis
+```lua
+-- ServerScriptService/IniciarRegras (Script)
+local Kit = require(game.ServerScriptService.RegrasMalucasKit)
+Kit.iniciar()
+```
+
+A partir daí, quem monta a fase **não abre nenhum script**: basta colocar Tags e Attributes nas peças.
+Isso também vale para peças criadas durante o jogo.
+
+## 🎮 As regras
+
+<img src="assets/regras.png" alt="Catálogo das 9 regras: Trampolim, Velocidade, Gravidade Leve, Cura, Dano, Morte, Some Ao Tocar, Pisca Pisca e Teleporte" width="100%">
+
+<details>
+<summary><b>Tabela das Tags e Attributes (texto)</b></summary>
 
 | Tag | O que faz | Attributes (padrão) |
 |---|---|---|
@@ -44,32 +58,32 @@ recorrentes, que este kit resolve por design:
 | `Regra:PiscaPisca` | Aparece e some em ciclo | `TempoVisivel` (2), `TempoInvisivel` (2) |
 | `Regra:Teleporte` | Leva até a peça do `ObjectValue` filho `Destino` | – |
 
-## Instalação
+Uma Part pode ter várias Tags ao mesmo tempo (ex.: `Regra:SomeAoTocar` + `Regra:Dano`).
+</details>
 
-**Com Rojo** (recomendado): copie a pasta `src` para o seu projeto e mapeie como `RegrasMalucasKit`
-no `ServerScriptService`.
+## 🐛 Por que existe
 
-**Com Wally:**
-```toml
-[server-dependencies]
-RegrasMalucasKit = "paulapeclat/regras-malucas-kit@0.1.0"
-```
+As primeiras versões destas regras eram um script por peça, copiado e colado. Isso gerava quatro
+problemas recorrentes, que o kit resolve por design:
 
-**Sem ferramentas:** crie um ModuleScript `RegrasMalucasKit` com o conteúdo de `src/init.luau` e,
-dentro dele, os ModuleScripts `Regras`, `Util` e `Cooldown`.
+| No script copiado | No kit |
+|---|---|
+| Um toque dispara a regra dezenas de vezes (o `Touched` repete enquanto o pé encosta) | `Cooldown` **por jogador**, que não bloqueia os outros |
+| Pisar duas vezes no bônus guardava o valor já aumentado, e o bônus ficava para sempre | `Util.propriedadeTemporaria` guarda o valor **original** só no primeiro efeito |
+| `workspace.Gravity = 10` deixava **o servidor inteiro** leve | `GravidadeLeve` aplica uma `VectorForce` só em quem tocou |
+| 40 cópias do mesmo script para manter | Um módulo; as peças só têm Tags e Attributes |
 
-## Uso
+## 📦 Instalação
 
-```lua
--- ServerScriptService/IniciarRegras (Script)
-local Kit = require(game.ServerScriptService.RegrasMalucasKit)
-Kit.iniciar()
-```
+| Jeito | Como |
+|---|---|
+| **Rojo** (recomendado) | Copie a pasta `src` para o seu projeto e mapeie como `RegrasMalucasKit` no `ServerScriptService` |
+| **Wally** | `RegrasMalucasKit = "paulapeclat/regras-malucas-kit@0.1.0"` em `[server-dependencies]` |
+| **Só o Studio** | Crie um ModuleScript `RegrasMalucasKit` com o conteúdo de `src/init.luau` e, dentro dele, os ModuleScripts `Regras`, `Util` e `Cooldown` |
 
-No Studio: selecione a Part → **Properties → Tags → +** → `Regra:Trampolim`.
-Para ajustar, adicione o Attribute `Forca` (number).
+## ✨ Crie a sua regra
 
-### Criando sua própria regra
+Uma regra é só uma função que recebe a Part. Registre antes de `iniciar()` e use a Tag `Regra:<Nome>`:
 
 ```lua
 local Kit = require(game.ServerScriptService.RegrasMalucasKit)
@@ -80,10 +94,16 @@ Kit.Regras.Gigante = function(parte: BasePart)
 	end)
 end
 
-Kit.iniciar() -- registre antes de iniciar
+Kit.iniciar()
 ```
 
-## Desenvolvimento
+## 🛠️ Por dentro
+
+- `--!strict` em todos os módulos.
+- Toda a lógica roda no **servidor**: o cliente não decide dano, cura nem teleporte.
+- `Cooldown` não depende do Roblox (recebe o relógio por parâmetro), por isso tem testes em Luau puro.
+- Tabelas internas com `__mode = "k"`, para não segurar na memória peças e Humanoids destruídos.
+- CI no GitHub Actions: StyLua, Selene e testes a cada push.
 
 ```bash
 rokit install                       # rojo, stylua, selene
@@ -93,14 +113,26 @@ selene src examples
 luau tests/Cooldown.spec.luau       # testes, rodam fora do Roblox
 ```
 
-Decisões técnicas:
-- `--!strict` em todos os módulos.
-- `Cooldown` não depende do Roblox (recebe o relógio por parâmetro), por isso é testável em Luau puro.
-- Tabelas internas com `__mode = "k"` para não segurar peças e humanoids destruídos na memória.
-- Toda a lógica roda no **servidor**: o cliente não decide dano, cura nem teleporte.
+## 📘 O livro
 
-## Autora
+<table>
+<tr>
+<td>
 
-**Paula Peclat** · pedagoga e game developer · [paulapeclat.com.br](https://paulapeclat.com.br)
+**Crie o primeiro obby com seu filho(a)**
 
-Licença MIT.
+Um passo a passo para pais e crianças construírem juntos o primeiro jogo, em 9 sessões:
+a criança no teclado, você no code review. As regras deste kit aparecem lá explicadas do zero.
+
+<a href="https://paulapeclat.github.io/primeiro-obby/"><img src="https://img.shields.io/badge/Entrar_na_lista_de_espera_→-ffc83d?style=for-the-badge&labelColor=ffc83d&color=ffc83d" alt="Entrar na lista de espera"></a>
+
+</td>
+</tr>
+</table>
+
+---
+
+<p align="center">
+  Feito por <b>Paula Peclat</b>, pedagoga e game developer · <a href="https://paulapeclat.com.br">paulapeclat.com.br</a><br>
+  <sub>Licença MIT · Projeto independente, não afiliado à Roblox Corporation.</sub>
+</p>
