@@ -1,0 +1,9 @@
+[package]
+name = "paulapeclat/regras-malucas-kit"
+description = "Mecânicas de obby para Roblox ligadas por Tags e configuradas por Attributes"
+version = "0.1.0"
+license = "MIT"
+authors = ["Paula Peclat"]
+realm = "server"
+registry = "https://github.com/UpliftGames/wally-index"
+include = ["src", "default.project.json", "README.md", "LICENSE"]

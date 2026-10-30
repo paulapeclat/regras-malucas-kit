@@ -1,0 +1,10 @@
+{
+  "name": "RegrasMalucasKitDemo",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "RegrasMalucasKit": { "$path": "src" },
+      "IniciarRegras": { "$path": "examples/IniciarRegras.server.luau" }
+    }
+  }
+}

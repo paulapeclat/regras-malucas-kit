@@ -1,0 +1,5 @@
+std = "roblox"
+
+[rules]
+# os testes usam print para mostrar o resultado
+unused_variable = "warn"
