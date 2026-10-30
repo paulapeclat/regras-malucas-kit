@@ -60,12 +60,13 @@ function Util.propriedadeTemporaria(inst: Instance, prop: string, valor: any, du
 	end
 	efeito.token += 1
 	local meuToken = efeito.token
-	;(inst :: any)[prop] = valor
+	local alvo: any = inst
+	alvo[prop] = valor
 
 	task.delay(duracao, function()
 		if porInst[prop] == efeito and efeito.token == meuToken then
 			if inst.Parent then
-				(inst :: any)[prop] = efeito.original
+				alvo[prop] = efeito.original
 			end
 			porInst[prop] = nil
 		end
