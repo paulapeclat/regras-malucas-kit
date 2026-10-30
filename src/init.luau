@@ -26,7 +26,7 @@ local iniciado = false
 
 local function ligar(nome: string, inst: Instance)
 	if not inst:IsA("BasePart") then
-		warn(`[regras-malucas-kit] {inst:GetFullName()} tem a tag {PREFIXO}{nome}, mas não é uma BasePart`)
+		warn(`[regras-malucas-kit] {inst:GetFullName()} tem a tag {PREFIXO}{nome}, mas não é BasePart`)
 		return
 	end
 	local jaLigadas = ligadas[inst]
