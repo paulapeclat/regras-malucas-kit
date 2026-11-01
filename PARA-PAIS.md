@@ -83,7 +83,7 @@ fazem coisas que você não quer. Prefira materiais de quem mostra o código, co
 ## Quer ir além?
 
 - 📘 O livro **Crie o primeiro obby com seu filho(a)** ensina, em 9 sessões, a criança a escrever
-  essas regras ela mesma. [Entre na lista de espera →](https://paulapeclat.github.io/primeiro-obby/)
+  essas regras ela mesma. [Leia o Capítulo 5 grátis →](https://paulapeclat.github.io/primeiro-obby/)
 - Se você já programa, o [README](README.md) explica como o kit funciona por dentro.
 
 ## Palavras que aparecem no Studio

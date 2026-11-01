@@ -130,7 +130,9 @@ luau tests/Cooldown.spec.luau       # testes, rodam fora do Roblox
 Um passo a passo para pais e crianças construírem juntos o primeiro jogo, em 9 sessões:
 a criança no teclado, você no code review. As regras deste kit aparecem lá explicadas do zero.
 
-<a href="https://paulapeclat.github.io/primeiro-obby/"><img src="https://img.shields.io/badge/Entrar_na_lista_de_espera_→-ffc83d?style=for-the-badge&labelColor=ffc83d&color=ffc83d" alt="Entrar na lista de espera"></a>
+<a href="https://paulapeclat.github.io/primeiro-obby/"><img src="assets/botao-livro.png" width="379" alt="Ler o Capítulo 5 grátis e saber quando o livro sair"></a>
+
+<sub>O livro ainda não foi lançado. Na página, você baixa o Capítulo 5 sem cadastro e, se quiser, deixa seu e-mail para ser avisado(a) do lançamento.</sub>
 
 </td>
 </tr>
