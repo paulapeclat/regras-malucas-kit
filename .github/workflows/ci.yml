@@ -36,3 +36,8 @@ jobs:
 
       - name: Testes do Cooldown
         run: ./luau tests/Cooldown.spec.luau
+
+      - name: Kit pronto atualizado com src/
+        run: |
+          python3 tools/gerar_kit_pronto.py
+          git diff --exit-code kit-pronto/ || { echo "::error::Rode python3 tools/gerar_kit_pronto.py e faça commit"; exit 1; }
