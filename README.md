@@ -117,14 +117,19 @@ luau tests/Cooldown.spec.luau       # testes, rodam fora do Roblox
 
 <table>
 <tr>
-<td>
+<td width="170" valign="top">
+<a href="https://paulapeclat.github.io/primeiro-obby/capitulo-5-de-presente.pdf"><img src="assets/livro-capa.jpg" alt="Capa do livro Crie o primeiro obby com seu filho(a)" width="160"></a>
+</td>
+<td valign="top">
 
 **Crie o primeiro obby com seu filho(a)**
 
-Um passo a passo para pais e crianças construírem juntos o primeiro jogo, em 9 sessões:
-a criança no teclado, você no code review. As regras deste kit aparecem lá explicadas do zero.
+Um passo a passo para pais e crianças construírem juntos o primeiro jogo, em 9 sessões: a criança no teclado, você no code review. As regras deste kit aparecem lá explicadas do zero.
 
-<a href="https://paulapeclat.github.io/primeiro-obby/"><img src="https://img.shields.io/badge/Entrar_na_lista_de_espera_→-ffc83d?style=for-the-badge&labelColor=ffc83d&color=ffc83d" alt="Entrar na lista de espera"></a>
+**Leia o Capítulo 5 de graça:** o primeiro script da criança, um bloco que derruba quem encosta, em oito linhas que ela entende uma por uma.
+
+<a href="https://paulapeclat.github.io/primeiro-obby/capitulo-5-de-presente.pdf"><img src="https://img.shields.io/badge/Baixar_o_Cap%C3%ADtulo_5_gr%C3%A1tis-PDF-6b3fd6?style=for-the-badge&labelColor=6b3fd6&color=1d1240" alt="Baixar o Capítulo 5 grátis (PDF)"></a>
+<a href="https://paulapeclat.github.io/primeiro-obby/#lista-espera"><img src="https://img.shields.io/badge/Avise--me_do_lan%C3%A7amento-lista_de_espera-ffc83d?style=for-the-badge&labelColor=ffc83d&color=1d1240" alt="Entrar na lista de espera do lançamento"></a>
 
 </td>
 </tr>
