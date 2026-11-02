@@ -1,7 +1,7 @@
-"""Gera facil/RegrasMalucasKit.rbxmx: o kit + uma fase de exemplo, para arrastar no Roblox Studio.
+"""Gera kit-pronto/RegrasMalucasKit.rbxmx: o kit + uma fase de exemplo, para arrastar no Roblox Studio.
 
-Uso: python3 tools/gerar_kit_facil.py
-O código vem de src/, então o arquivo fácil sempre acompanha a versão do kit.
+Uso: python3 tools/gerar_kit_pronto.py
+O código vem de src/, então o arquivo pronto sempre acompanha a versão do kit.
 Não há require por ID, HttpService nem nada que baixe código de fora.
 """
 import base64
@@ -9,7 +9,7 @@ from pathlib import Path
 from xml.sax.saxutils import escape
 
 RAIZ = Path(__file__).resolve().parent.parent
-SAIDA = RAIZ / "facil" / "RegrasMalucasKit.rbxmx"
+SAIDA = RAIZ / "kit-pronto" / "RegrasMalucasKit.rbxmx"
 
 _ref = 0
 

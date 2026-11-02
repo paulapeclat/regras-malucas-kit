@@ -16,7 +16,7 @@
 
 <table align="center"><tr><td align="center">
 👨‍👩‍👧 <b>Nunca programou?</b> Baixe um arquivo, arraste para o Roblox Studio e brinque com seu filho(a).<br>
-<a href="PARA-PAIS.md"><b>Versão fácil para pais →</b></a>
+<a href="PARA-PAIS.md"><b>Guia para famílias: comece em 10 minutos →</b></a>
 </td></tr></table>
 
 <p align="center">
@@ -84,7 +84,7 @@ problemas recorrentes, que o kit resolve por design:
 |---|---|
 | **Rojo** (recomendado) | Copie a pasta `src` para o seu projeto e mapeie como `RegrasMalucasKit` no `ServerScriptService` |
 | **Wally** | `RegrasMalucasKit = "paulapeclat/regras-malucas-kit@0.1.0"` em `[server-dependencies]` |
-| **Arrastar e soltar** | Baixe [`RegrasMalucasKit.rbxmx`](https://github.com/paulapeclat/regras-malucas-kit/releases/latest/download/RegrasMalucasKit.rbxmx) e arraste para o Studio. Vem com uma fase de exemplo. Gerado de `src/` por `tools/gerar_kit_facil.py` |
+| **Arrastar e soltar** | Baixe [`RegrasMalucasKit.rbxmx`](https://github.com/paulapeclat/regras-malucas-kit/releases/latest/download/RegrasMalucasKit.rbxmx) e arraste para o Studio. Vem com uma fase de exemplo. Gerado de `src/` por `tools/gerar_kit_pronto.py` |
 | **Só o Studio, à mão** | Crie um ModuleScript `RegrasMalucasKit` com o conteúdo de `src/init.luau` e, dentro dele, os ModuleScripts `Regras`, `Util` e `Cooldown` |
 
 ## ✨ Crie a sua regra

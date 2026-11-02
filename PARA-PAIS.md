@@ -1,4 +1,4 @@
-# Regras Malucas para pais (versão fácil)
+# Regras Malucas em família: comece em 10 minutos
 
 **Você não precisa saber programar.** Em 10 minutos você e seu filho(a) colocam no Roblox Studio uma
 fase com trampolim, teleporte, gravidade leve e outras 6 regras malucas, e depois montam a fase de vocês
