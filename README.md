@@ -6,6 +6,7 @@
   <img src="https://img.shields.io/badge/Luau-strict-8b5cf6?style=for-the-badge" alt="Luau strict">
   <img src="https://img.shields.io/badge/Roblox-Studio-38bdf8?style=for-the-badge" alt="Roblox Studio">
   <img src="https://img.shields.io/badge/licen%C3%A7a-MIT-3ddc84?style=for-the-badge" alt="Licença MIT">
+  <a href="https://doi.org/10.5281/zenodo.24238320"><img src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.24238320-1682D4?style=for-the-badge" alt="DOI 10.5281/zenodo.24238320"></a>
   <a href="https://github.com/paulapeclat/regras-malucas-kit/actions"><img src="https://img.shields.io/github/actions/workflow/status/paulapeclat/regras-malucas-kit/ci.yml?branch=main&style=for-the-badge&label=CI" alt="CI"></a>
 </p>
 
