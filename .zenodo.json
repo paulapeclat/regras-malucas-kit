@@ -1,0 +1,29 @@
+{
+  "title": "Regras Malucas Kit: mecânicas de obby para Roblox Studio ligadas por Tags e configuradas por Attributes",
+  "upload_type": "software",
+  "description": "<p>Módulo Luau (strict) com nove regras de obby que se ligam a peças do Roblox Studio por Tags e se configuram por Attributes, para que crianças e famílias montem fases sem abrir scripts. Inclui arquivo pronto para arrastar no Studio, guia para pais e testes automatizados.</p>",
+  "creators": [
+    {
+      "name": "Peclat, Paula",
+      "affiliation": "Educação Tecnológica Paula Peclat",
+      "orcid": "0009-0008-6535-7090"
+    }
+  ],
+  "license": "mit",
+  "language": "por",
+  "keywords": [
+    "Roblox",
+    "Luau",
+    "obby",
+    "game design",
+    "educação tecnológica",
+    "família"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/paulapeclat/regras-malucas-kit",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    }
+  ]
+}

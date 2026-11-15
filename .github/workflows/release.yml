@@ -1,0 +1,26 @@
+name: Anexar kit pronto à release
+
+# Quando uma release é publicada, gera o RegrasMalucasKit.rbxmx a partir de src/
+# e anexa à release. É esse anexo que o botão "Baixar o kit" do PARA-PAIS.md usa
+# (releases/latest/download/RegrasMalucasKit.rbxmx).
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  anexar-kit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Gerar o kit pronto
+        run: python3 tools/gerar_kit_pronto.py
+
+      - name: Anexar à release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" kit-pronto/RegrasMalucasKit.rbxmx --clobber
